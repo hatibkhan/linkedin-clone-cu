@@ -1,34 +1,53 @@
-import React from "react";
-import Header from "./Components/Header";
+import { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import "./App.css";
-import Sidebar from "./Components/Sidebar";
-import Feed from "./Components/Feed";
-import { useSelector } from "react-redux";
-import { selectUser } from "./features/userSlice";
-import Login from "./Components/Login";
+import { login, logout, selectUser } from "./features/userSlice";
+import Feed from "./Feed";
+import { auth } from "./firebase";
+import Header from "./Header";
+import Login from "./Login";
+import Sidebar from "./Sidebar";
+import Widgets from "./Widgets";
 
 function App() {
-	const user = useSelector(selectUser);
-	console.log(user);
-	return (
-		<div className="app">
-			{/* header */}
-			<Header />
-			{/* if no user render login page */}
-			{!user ? (
-				<Login />
-			) : (
-				<div className="app-body">
-					{/* main content */}
-					<Sidebar />
-					{/* sidebar */}
-					<Feed />
-					{/* feed */}
-					{/* widget */}
-				</div>
-			)}
-		</div>
-	);
+  const userState = useSelector(selectUser);
+  const { user } = userState;
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    auth.onAuthStateChanged((userAuth) => {
+      if (userAuth) {
+        dispatch(
+          login({
+            email: userAuth.email,
+            uid: userAuth.uid,
+            displayName: userAuth.displayName,
+            photoUrl: userAuth.photoURL,
+          })
+        );
+      } else {
+        dispatch(logout());
+      }
+    });
+
+    //eslint-disable-next-line
+  }, []);
+
+  return (
+    <div className="app">
+      <Header />
+
+      {!user ? (
+        <Login />
+      ) : (
+        <div className="app__body">
+          <Sidebar />
+          <Feed />
+          <Widgets />
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default App;
